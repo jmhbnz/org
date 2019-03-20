@@ -26,14 +26,20 @@ apt-get install -y \
  git \
  gnupg2 \
  jq \
+ libgif-dev \
  libgnutls28-dev \
  libncurses5-dev \
+ libtiff5-dev \
+ libjpeg-dev \
+ libpng-dev \
  libtinfo-dev \
  libxml2-dev \
+ libxpm-dev \
  liblz4-tool \
  make \
+ mailutils \
  mtr \
- openjdk-8-jdk \
+ pkg-config \
  python3-dev \
  silversearcher-ag \
  software-properties-common \
@@ -46,6 +52,7 @@ apt-get install -y \
  whowatch \
  zip
 #+END_SRC
+ # openjdk-8-jdk \
 ** Install Docker
 
 #+NAME: install docker
@@ -53,7 +60,7 @@ apt-get install -y \
 # https://docs.docker.com/install/linux/docker-ce/debian/#set-up-the-repository
 curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
 add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/debian \
+   "deb https://download.docker.com/linux/debian \
    $(lsb_release -cs) \
    stable"
 apt-get update
@@ -75,7 +82,7 @@ apt-get install -y kubelet kubeadm kubectl
 #+NAME: Install Google Cloud SDK
 #+BEGIN_SRC tmux :session k8s:boxsetup
 export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
-echo "deb https://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+echo "deb https://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 sudo apt-get update && sudo apt-get install -y google-cloud-sdk
 #rsync -av .config/gcloud root@147.75.109.157:.config/gcloud
@@ -134,22 +141,24 @@ chmod +x /usr/local/bin/bazel
 #+NAME: install emacs
 #+BEGIN_SRC tmux :session k8s:packet
 # possibly look into shallow or specific tag clone
-#git clone git clone https://git.savannah.gnu.org/git/emacs.git /usr/local/src/emacs
+git clone https://git.savannah.gnu.org/git/emacs.git /usr/local/src/emacs
 # https://golang.org/doc/install#install
 cd /usr/local/src/emacs
 ./autogen
-./configure --with-x-toolkit=no --with-xpm=no --with-jpeg=no --with-png=no --with-gif=no --with-tiff=no
+./configure --with-x-toolkit=no
+# --with-xpm=no --with-jpeg=no --with-png=no --with-gif=no --with-tiff=no
 # find the command to use correct number of jobs... should equal number of (virtual) cores
 make -j 48 install
 #+END_SRC
 ** Install Spacemacs Customizations
 #+NAME: configure spacemacs (ii+tmate)
-#+BEGIN_SRC tmux :session k8s:packet
-git clone https://github.com/ii/spacemacs ~/.emacs.d
-ln -s ~/.emacs.d/private/local/.spacemacs ~/.spacemacs
-git clone https://github.com/ii/ob-tmux ~/.emacs.d/private/local/ob-tmux.el/
-git clone https://github.com/benma/go-dlv.el ~/.emacs.d/private/local/go-dlv.el/
-echo "alias emc='emacsclient -t '" > /etc/profile.d/emc-alias.sh
+#+BEGIN_SRC tmux :session k8s:packet :socket /tmp/.zz.isocket
+  git clone https://github.com/ii/spacemacs ~/.emacs.d
+  ln -s ~/.emacs.d/private/local/.spacemacs ~/.spacemacs
+  git clone https://github.com/ii/ob-tmate ~/.emacs.d/private/local/ob-tmate.el/
+  git clone https://github.com/ii/ob-tmux ~/.emacs.d/private/local/ob-tmux.el/
+  git clone https://github.com/benma/go-dlv.el ~/.emacs.d/private/local/go-dlv.el/
+  echo "alias emc='emacsclient -t '" > /etc/profile.d/emc-alias.sh
 #+END_SRC
 ** Install tmate
 #+NAME: install tmate
@@ -165,8 +174,8 @@ curl -L https://github.com/tmate-io/tmate/releases/download/2.2.1/tmate-2.2.1-st
   set-option -g set-clipboard on
   set-option -g mouse on
   set-option -g history-limit 50000
-  # ii tmate -- pair.ii.coop
-  # set -g tmate-server-host pair.ii.coop
+  # ii tmate -- pair.ii.nz
+  # set -g tmate-server-host pair.ii.nz
   # set -g tmate-server-port 22
   # set -g tmate-server-rsa-fingerprint   "f9:af:d5:f2:47:8b:33:53:7b:fb:ba:81:ba:37:d3:b9"
   # set -g tmate-server-ecdsa-fingerprint   "32:44:b3:bb:b3:0a:b8:20:05:32:73:f4:9a:fd:ee:a8"
@@ -213,6 +222,11 @@ Kubernetes is failing to come up because to the certs are not signed correctly, 
 flags including the required  --apiserver-cert-extra-sans flag, atleast this optioncan be set in the config file, see https://github.com/kubernetes/kubernetes/issues/55566
 
 ** tmate stuff
+*** window management
+#+BEGIN_SRC shell
+tmate list-windows
+tmate kill-window -t X
+#+END_SRC
 #+NAME: create or reconnect to the target k8s tmate session
 #+BEGIN_EXAMPLE
 tmate -S /tmp/ii-tmate.sock new-session -A -s k8s -c ~/go/src/kubernetes
